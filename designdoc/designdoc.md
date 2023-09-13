@@ -2,30 +2,38 @@
 
 A template for design docs for machine learning systems based on this [post](https://eugeneyan.com/writing/ml-design-docs/).
 
-> **_NOTE:_** This template is a guideline and is **not meant to be exhaustive**. The intent of the design doc is to help you think better about the problem and design.
-
 ---
+
 ## 1. Overview
-> **_NOTE:_**  A summary of the doc's purpose, problem, solution, and desired outcome, usually in 3-5 sentences.   
+
+> **_NOTE:_**  A summary of the doc's purpose, problem, solution, and desired outcome, usually in 3-5 sentences.
 
 We want to create an online platform for removing watermarks from images. We want to host this service online as a user-friendly webpage with simple interface. It will offer to upload an image, then automatically transforms it and allows to download the same image without watermarks. We plan to use neural network based on PyTorch framework for backend image modification.
 
+
 ## 2. Motivation
+
 > **_NOTE:_**  Why the problem is important to solve, and why now.
 
 ## 3. Success metrics
+
 > **_NOTE:_**  Usually framed as business goals, such as increased customer engagement (e.g., CTR, DAU), revenue, or reduced cost.
 
 ## 4. Requirements & Constraints
-> **_NOTE:_**  Functional requirements are those that should be met to ship the project. They should be described in terms of the customer perspective and benefit. (See [this](https://eugeneyan.com/writing/ml-design-docs/#the-why-and-what-of-design-docs) for more details.)  
-Non-functional/technical requirements are those that define system quality and how the system should be implemented. These include performance (throughput, latency, error rates), cost (infra cost, ops effort), security, data privacy, etc.  
-Constraints can come in the form of non-functional requirements (e.g., cost below $`x` a month, p99 latency < `y`ms)
+
+
+> **_NOTE:_**  Functional requirements are those that should be met to ship the project. They should be described in terms of the customer perspective and benefit. (See [this](https://eugeneyan.com/writing/ml-design-docs/#the-why-and-what-of-design-docs) for more details.)
+> Non-functional/technical requirements are those that define system quality and how the system should be implemented. These include performance (throughput, latency, error rates), cost (infra cost, ops effort), security, data privacy, etc.
+> Constraints can come in the form of non-functional requirements (e.g., cost below $`x` a month, p99 latency < `y`ms)
 
 ### 4.1 What's in-scope & out-of-scope?
+
 > **_NOTE:_**  Some problems are too big to solve all at once. Be clear about what's out of scope.
 
 ## 5. Methodology
+
 We wrote methodology of the service in this [google-doc](https://docs.google.com/document/d/1kse9RHI55gEw1jd6kaquHvD184z1weNMX2D7CJMEzYQ/edit).
+
 ### 5.1. Problem statement
 
 > **_NOTE:_**  How will you frame the problem? For example, fraud detection can be framed as an unsupervised (outlier detection, graph cluster) or supervised problem (e.g., classification).
@@ -42,12 +50,31 @@ CIFAR100 with preprocessing
 
 ### 5.4. Experimentation & Validation
 
-> **_NOTE:_**  How will you validate your approach offline? What offline evaluation metrics will you use?  
-If you're A/B testing, how will you assign treatment and control (e.g., customer vs. session-based) and what metrics will you measure? What are the success and [guardrail](https://medium.com/airbnb-engineering/designing-experimentation-guardrails-ed6a976ec669) metrics?
+> **_NOTE:_**  How will you validate your approach offline? What offline evaluation metrics will you use?
+> If you're A/B testing, how will you assign treatment and control (e.g., customer vs. session-based) and what metrics will you measure? What are the success and [guardrail](https://medium.com/airbnb-engineering/designing-experimentation-guardrails-ed6a976ec669) metrics?
 
+## 6. Solution
 
+We divide this project into two main braches: ML development and Service development. Incremental work in these two sections can be performed simultaneously and independently until final stages.
 
+We see our project's general features in the following scheme:
 
+![](assets/20230913_203346_image.png)
+
+### 6.1 ML
+
+* скорее всего обучение модели будет происходить в одном контуре, а применение в другом -> возможно стоит воспользоваться каким-либо s3 и добавить dvc для удобства работы с большими файлами в разных контурах
+
+### 6.2 Service
+
+Основные элементы проекта изображены на схеме в п.6
+
+* Ориентировочно обученная модель будет развернута на локальном компьютере с доступом к GPU
+* Файл с обученной моделью, логика применения модели и обработки запросов от пользователей вместе будут контейнеризованы
+* В случае, если мы решим добавлять авторизацию пользователей или отслеживать какие-либо действия пользователей на сайте - нужно будет добавить БД
+* Для предотвращения спама, кажется, что для осуществления загрузки картинки нужно добавить решение капчи или что-то подобное (если не будет авторизации)
+* Взаимодействие пользователя с моделью будет реализовано с помощью **Flask** (в зависимости оттого, какие процессы внутри сервиса будут занимать больше времени: загрузка/выгрузка или обработка изображений, при том, что ожидаемая нагрузка на сервис будет от силы 30-40 запросов в минуту - возможно следует подумать об добавлении асинхронности в логику работы сервиса. Например, загрузка следующих изображений пока обрабатываются текущие)
+* Нужно определиться с фронтендом
 
 ## 7. Appendix
 
@@ -76,6 +103,7 @@ Define and link to business or technical terms.
 Add references that you might have consulted for your methodology.
 
 ## Other templates, examples, etc
+
 - [A Software Design Doc](https://www.industrialempathy.com/posts/design-doc-a-design-doc/) `Google`
 - [Design Docs at Google](https://www.industrialempathy.com/posts/design-docs-at-google/) `Google`
 - [Product Spec of Emoji Reactions on Twitter Messages](https://docs.google.com/document/d/1sUX-sm5qZ474PCQQUpvdi3lvvmWPluqHOyfXz3xKL2M/edit#heading=h.554u12gw2xpd) `Twitter`
